@@ -363,7 +363,7 @@ export default function PixelLogoStudio() {
   }, [])
 
   const onCanvasPointer = useCallback(
-    (e) => {
+    (e, valueOverride) => {
       const rect = e.currentTarget.getBoundingClientRect()
       const mx = e.clientX - rect.left
       const my = e.clientY - rect.top
@@ -373,7 +373,7 @@ export default function PixelLogoStudio() {
       const gx = pad + cx * (cell + gap)
       const gy = pad + cy * (cell + gap)
       if (mx >= gx && mx <= gx + cell && my >= gy && my <= gy + cell) {
-        toggleCell(cy, cx, paintVal)
+        toggleCell(cy, cx, valueOverride ?? paintVal)
       }
     },
     [pad, cell, gap, rows, cols, toggleCell, paintVal],
@@ -383,10 +383,11 @@ export default function PixelLogoStudio() {
     (e) => {
       e.preventDefault()
       const erase = e.altKey || e.button === 2
-      setPaintVal(!erase)
+      const nextPaintVal = !erase
+      setPaintVal(nextPaintVal)
       setMouseDown(true)
       pushUndo(grid)
-      onCanvasPointer(e)
+      onCanvasPointer(e, nextPaintVal)
     },
     [grid, onCanvasPointer, pushUndo],
   )
