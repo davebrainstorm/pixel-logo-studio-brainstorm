@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel Logo Studio</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f5f5f5;
+      --fg: #222;
+      --panel: #ffffffcc;
+      --border: #d0d0d0;
+      --accent: #2563eb;
+      --focus: #ffbf47;
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 1rem 1.5rem 0.5rem;
+    }
+    h1 {
+      margin: 0 0 0.25rem;
+      font-size: 1.8rem;
+    }
+    header p {
+      margin: 0;
+      font-size: 0.95rem;
+      color: #555;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      padding: 1rem 1.5rem 2rem;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      min-width: 260px;
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+    }
+    .panel h2 {
+      margin: 0 0 0.75rem;
+      font-size: 1.1rem;
+    }
+    .control-group {
+      display: grid;
+      gap: 0.35rem;
+      margin-bottom: 0.75rem;
+    }
+    label {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    input[type="number"],
+    input[type="range"],
+    input[type="color"],
+    select,
+    button,
+    textarea {
+      font: inherit;
+    }
+    input[type="number"],
+    input[type="range"],
+    input[type="color"],
+    select,
+    textarea {
+      padding: 0.35rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: inherit;
+    }
+    input[type="range"] {
+      padding: 0;
+      height: 1.5rem;
+    }
+    button {
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.5rem;
+      border: 1px solid transparent;
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.35);
+    }
+    button:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+    button.secondary {
+      background: transparent;
+      color: inherit;
+      border: 1px solid var(--border);
+    }
+    button.secondary:hover {
+      box-shadow: none;
+      background: rgba(37, 99, 235, 0.08);
+    }
+    #workspace {
+      flex: 1 1 360px;
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    #preview {
+      position: relative;
+      background: #fff;
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      padding: 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: auto;
+    }
+    #preview-inner {
+      position: relative;
+    }
+    #mainCanvas {
+      display: block;
+      background: #fff;
+      border-radius: 0.5rem;
+    }
+    #gridOverlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    #gridOverlay button.cell-hit {
+      position: absolute;
+      border: none;
+      background: transparent;
+      pointer-events: auto;
+      margin: 0;
+      padding: 0;
+      border-radius: 0.35rem;
+    }
+    #gridOverlay button.cell-hit:focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+    .slots {
+      display: grid;
+      gap: 0.5rem;
+    }
+    .slot-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .slot-row label {
+      font-weight: 500;
+    }
+    fieldset {
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 0.75rem;
+    }
+    fieldset legend {
+      padding: 0 0.35rem;
+      font-weight: 600;
+    }
+    .exports button {
+      width: 100%;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+    .status-text {
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 0.5rem;
+    }
+    @media (max-width: 900px) {
+      main {
+        flex-direction: column;
+      }
+      #workspace {
+        order: -1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Pixel Logo Studio</h1>
+    <p>Lottie uses local paths (0,0) + layer transforms; joiners render above cells.</p>
+  </header>
+  <main>
+    <section id="workspace" aria-label="Pixel grid workspace" class="panel">
+      <div id="preview" aria-live="polite">
+        <div id="preview-inner">
+          <canvas id="mainCanvas" aria-label="Pixel logo grid" role="img"></canvas>
+          <div id="gridOverlay" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="status-text" id="status"></div>
+    </section>
+
+    <section class="panel" aria-label="Grid settings">
+      <h2>Grid</h2>
+      <div class="control-group">
+        <label for="rows">Rows</label>
+        <input type="number" id="rows" min="2" max="12" value="5">
+      </div>
+      <div class="control-group">
+        <label for="cols">Columns</label>
+        <input type="number" id="cols" min="2" max="12" value="5">
+      </div>
+      <div class="control-group">
+        <label for="cellSize">Cell Size (px)</label>
+        <input type="range" id="cellSize" min="20" max="160" value="80">
+      </div>
+      <div class="control-group">
+        <label for="color">Foreground Colour</label>
+        <input type="color" id="color" value="#1f2933">
+      </div>
+      <div class="control-group">
+        <button id="clearGrid" class="secondary" type="button">Clear Grid</button>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Joiners and style">
+      <h2>Style &amp; Joiners</h2>
+      <div class="control-group">
+        <label for="radiusFactor">Join Radius Factor</label>
+        <input type="range" id="radiusFactor" min="0.1" max="0.5" step="0.01" value="0.28">
+      </div>
+      <div class="control-group">
+        <label class="checkbox">
+          <input type="checkbox" id="concaveDiagonal" checked>
+          Concave diagonal joiners
+        </label>
+      </div>
+      <div class="control-group">
+        <label class="checkbox">
+          <input type="checkbox" id="blobT" checked>
+          T-junction centre blobs
+        </label>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Slots and morphing">
+      <h2>Slots &amp; Morph</h2>
+      <div class="control-group">
+        <label for="activeSlot">Active Slot</label>
+        <select id="activeSlot" aria-label="Active save slot"></select>
+      </div>
+      <div class="control-group">
+        <button id="saveSlot" type="button">Save → Active Slot</button>
+      </div>
+      <fieldset>
+        <legend>Morph Sources (2–5)</legend>
+        <div id="morphSlots" class="slots" role="group" aria-label="Morph source slots"></div>
+      </fieldset>
+      <div class="control-group">
+        <label for="framesPerStep">Frames per step</label>
+        <input type="number" id="framesPerStep" min="1" max="60" value="10">
+      </div>
+    </section>
+
+    <section class="panel exports" aria-label="Exports">
+      <h2>Exports</h2>
+      <div class="control-group">
+        <button id="exportPng" type="button">Download PNG</button>
+      </div>
+      <div class="control-group">
+        <button id="exportSvg" type="button">Download SVG</button>
+      </div>
+      <div class="control-group">
+        <button id="copySvg" type="button" class="secondary">Copy SVG to Clipboard</button>
+      </div>
+      <div class="control-group">
+        <button id="exportJson" type="button">Download JSON</button>
+      </div>
+      <div class="control-group">
+        <button id="importJson" type="button" class="secondary">Import JSON</button>
+      </div>
+      <div class="control-group">
+        <button id="exportLottie" type="button">Download Lottie JSON</button>
+      </div>
+      <div class="control-group">
+        <button id="exportFramesZip" type="button">Frames → ZIP</button>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="jsonDialog">
+    <form method="dialog">
+      <h2>Import Pixel Logo JSON</h2>
+      <div class="control-group">
+        <label for="jsonInput">Paste JSON</label>
+        <textarea id="jsonInput" spellcheck="false" aria-label="Pixel Logo JSON"></textarea>
+      </div>
+      <menu>
+        <button value="cancel" class="secondary">Cancel</button>
+        <button value="import">Import</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script>
+    (function() {
+      "use strict";
+
+      // Constants & Helpers --------------------------------------------------
+      const MIN_SIZE = 2;
+      const MAX_SIZE = 12;
+      const MIN_CELL_PX = 20;
+      const MAX_CELL_PX = 160;
+      const DEFAULT_ROWS = 5;
+      const DEFAULT_COLS = 5;
+      const DEFAULT_CELL = 80;
+      const DEFAULT_COLOR = "#1f2933";
+      const SLOT_KEY = "pls_slots_v2";
+      const EPS = 0.001;
+
+      const elements = {
+        rows: document.getElementById("rows"),
+        cols: document.getElementById("cols"),
+        cellSize: document.getElementById("cellSize"),
+        color: document.getElementById("color"),
+        clear: document.getElementById("clearGrid"),
+        radiusFactor: document.getElementById("radiusFactor"),
+        concaveDiagonal: document.getElementById("concaveDiagonal"),
+        blobT: document.getElementById("blobT"),
+        canvas: document.getElementById("mainCanvas"),
+        overlay: document.getElementById("gridOverlay"),
+        status: document.getElementById("status"),
+        activeSlot: document.getElementById("activeSlot"),
+        saveSlot: document.getElementById("saveSlot"),
+        morphSlots: document.getElementById("morphSlots"),
+        framesPerStep: document.getElementById("framesPerStep"),
+        exportPng: document.getElementById("exportPng"),
+        exportSvg: document.getElementById("exportSvg"),
+        copySvg: document.getElementById("copySvg"),
+        exportJson: document.getElementById("exportJson"),
+        importJson: document.getElementById("importJson"),
+        exportLottie: document.getElementById("exportLottie"),
+        exportFramesZip: document.getElementById("exportFramesZip"),
+        dialog: document.getElementById("jsonDialog"),
+        jsonInput: document.getElementById("jsonInput")
+      };
+
+      function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+      }
+
+      function pad4(num) {
+        return num.toString().padStart(4, "0");
+      }
+
+      function hexToRgb(hex) {
+        const clean = hex.replace(/^#/, "");
+        const int = parseInt(clean, 16);
+        return {
+          r: (int >> 16) & 255,
+          g: (int >> 8) & 255,
+          b: int & 255
+        };
+      }
+
+      function dl(name, blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        requestAnimationFrame(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        });
+      }
+
+      function dlText(name, text) {
+        dl(name, new Blob([text], { type: "text/plain" }));
+      }
+
+      function toBooleanArray(arr, rows, cols) {
+        const len = rows * cols;
+        const out = new Array(len).fill(false);
+        arr.slice(0, len).forEach((val, idx) => {
+          out[idx] = Boolean(val);
+        });
+        return out;
+      }
+
+      function defaultState(rows, cols) {
+        return new Array(rows * cols).fill(false);
+      }
+
+      function indexFor(x, y, cols) {
+        return y * cols + x;
+      }
+
+      function coordsFor(index, cols) {
+        const y = Math.floor(index / cols);
+        const x = index - y * cols;
+        return { x, y };
+      }
+
+      function cloneState(state) {
+        return state.slice();
+      }
+
+      // Slots ----------------------------------------------------------------
+      function loadSlots(rows, cols) {
+        const stored = window.localStorage.getItem(SLOT_KEY);
+        if (!stored) {
+          return new Array(5).fill(null);
+        }
+        try {
+          const data = JSON.parse(stored);
+          if (!Array.isArray(data) || data.length !== 5) {
+            return new Array(5).fill(null);
+          }
+          return data.map(entry => {
+            if (!entry || entry.rows !== rows || entry.cols !== cols || !Array.isArray(entry.grid)) {
+              return null;
+            }
+            return toBooleanArray(entry.grid, rows, cols);
+          });
+        } catch (err) {
+          console.warn("Failed to parse stored slots", err);
+          return new Array(5).fill(null);
+        }
+      }
+
+      function saveSlots(slots, rows, cols) {
+        const payload = slots.map(grid => {
+          if (!grid) return null;
+          return { rows, cols, grid: grid.slice() };
+        });
+        window.localStorage.setItem(SLOT_KEY, JSON.stringify(payload));
+      }
+
+      function updateSlotSelectors(slots, activeIndex, rows, cols) {
+        elements.activeSlot.innerHTML = "";
+        elements.morphSlots.innerHTML = "";
+        for (let i = 0; i < 5; i++) {
+          const option = document.createElement("option");
+          option.value = String(i);
+          option.textContent = `Slot ${i + 1}`;
+          if (i === activeIndex) {
+            option.selected = true;
+          }
+          elements.activeSlot.appendChild(option);
+
+          const row = document.createElement("div");
+          row.className = "slot-row";
+          const label = document.createElement("label");
+          label.htmlFor = `morph-slot-${i}`;
+          label.textContent = `Slot ${i + 1}`;
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.id = `morph-slot-${i}`;
+          checkbox.dataset.slotIndex = String(i);
+          if (slots[i]) {
+            checkbox.dataset.ready = "true";
+          }
+          checkbox.addEventListener("change", () => {
+            const checked = getSelectedMorphSlots();
+            if (checked.length > 5) {
+              checkbox.checked = false;
+            }
+          });
+          row.appendChild(label);
+          row.appendChild(checkbox);
+          elements.morphSlots.appendChild(row);
+        }
+      }
+
+      function getSelectedMorphSlots() {
+        const boxes = elements.morphSlots.querySelectorAll("input[type='checkbox']");
+        const selected = [];
+        boxes.forEach(box => {
+          if (box.checked) {
+            selected.push(Number(box.dataset.slotIndex));
+          }
+        });
+        return selected;
+      }
+
+      function setStatus(message) {
+        elements.status.textContent = message || "";
+      }
+
+      // Joiner computation ---------------------------------------------------
+      function computeJoiners(state, rows, cols, options) {
+        const joiners = [];
+        const radius = options.radiusFactor * options.cellSize;
+        const seen = new Set();
+
+        function addJoiner(x, y, kind, scale = 1) {
+          const key = `${x.toFixed(4)}:${y.toFixed(4)}:${kind}:${scale.toFixed(4)}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            joiners.push({ x, y, radius: radius * scale, kind });
+          }
+        }
+
+        const isFilled = (x, y) => {
+          if (x < 0 || x >= cols || y < 0 || y >= rows) return false;
+          return state[indexFor(x, y, cols)];
+        };
+
+        const cellSize = options.cellSize;
+
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            if (!isFilled(x, y)) continue;
+            const cx = (x + 0.5) * cellSize;
+            const cy = (y + 0.5) * cellSize;
+
+            // Horizontal joiners
+            if (isFilled(x + 1, y)) {
+              const jx = (x + 1) * cellSize;
+              addJoiner(jx, cy, "bridge");
+            }
+            // Vertical joiners
+            if (isFilled(x, y + 1)) {
+              const jy = (y + 1) * cellSize;
+              addJoiner(cx, jy, "bridge");
+            }
+
+            if (options.blobT) {
+              const orth = [
+                isFilled(x - 1, y),
+                isFilled(x + 1, y),
+                isFilled(x, y - 1),
+                isFilled(x, y + 1)
+              ];
+              const count = orth.filter(Boolean).length;
+              if (count === 3) {
+                addJoiner(cx, cy, "t", 0.6);
+              }
+            }
+          }
+        }
+
+        if (options.concaveDiagonal) {
+          for (let y = 0; y < rows - 1; y++) {
+            for (let x = 0; x < cols - 1; x++) {
+              const topLeft = isFilled(x, y);
+              const topRight = isFilled(x + 1, y);
+              const bottomLeft = isFilled(x, y + 1);
+              const bottomRight = isFilled(x + 1, y + 1);
+              const jx = (x + 1) * cellSize;
+              const jy = (y + 1) * cellSize;
+              if (topLeft && bottomRight && !topRight && !bottomLeft) {
+                addJoiner(jx, jy, "diag");
+              }
+              if (bottomLeft && topRight && !topLeft && !bottomRight) {
+                addJoiner(jx, jy, "diag");
+              }
+            }
+          }
+        }
+
+        return joiners;
+      }
+
+      // Rendering ------------------------------------------------------------
+      function drawStateToCanvas(ctx, state, rows, cols, options) {
+        const { cellSize, color, radiusFactor, concaveDiagonal, blobT } = options;
+        const width = cols * cellSize;
+        const height = rows * cellSize;
+        ctx.canvas.width = width;
+        ctx.canvas.height = height;
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+
+        const rgb = hexToRgb(color);
+        ctx.fillStyle = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            if (state[indexFor(x, y, cols)]) {
+              ctx.fillRect(x * cellSize + EPS, y * cellSize + EPS, cellSize - EPS * 2, cellSize - EPS * 2);
+            }
+          }
+        }
+
+        const joiners = computeJoiners(state, rows, cols, { radiusFactor, blobT, concaveDiagonal, cellSize });
+        joiners.forEach(joiner => {
+          ctx.beginPath();
+          ctx.arc(joiner.x, joiner.y, joiner.radius, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        return joiners;
+      }
+
+      function rebuildOverlay(rows, cols, cellSize) {
+        elements.overlay.innerHTML = "";
+        const width = cols * cellSize;
+        const height = rows * cellSize;
+        elements.overlay.style.width = width + "px";
+        elements.overlay.style.height = height + "px";
+
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            const idx = indexFor(x, y, cols);
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "cell-hit";
+            btn.style.left = (x * cellSize) + "px";
+            btn.style.top = (y * cellSize) + "px";
+            btn.style.width = cellSize + "px";
+            btn.style.height = cellSize + "px";
+            btn.dataset.index = String(idx);
+            btn.setAttribute("aria-label", `Toggle cell ${y + 1}, ${x + 1}`);
+            btn.addEventListener("click", () => toggleCell(idx));
+            btn.addEventListener("contextmenu", (ev) => {
+              ev.preventDefault();
+              toggleCell(idx);
+            });
+            btn.addEventListener("keydown", (ev) => {
+              if (ev.key === " " || ev.key === "Enter") {
+                ev.preventDefault();
+                toggleCell(idx);
+              }
+            });
+            elements.overlay.appendChild(btn);
+          }
+        }
+      }
+
+      function redraw() {
+        const options = getOptions();
+        const ctx = canvasContext;
+        const joiners = drawStateToCanvas(ctx, state, rows, cols, options);
+        elements.overlay.style.width = ctx.canvas.width + "px";
+        elements.overlay.style.height = ctx.canvas.height + "px";
+        elements.overlay.parentElement.style.width = ctx.canvas.width + "px";
+        elements.overlay.parentElement.style.height = ctx.canvas.height + "px";
+        elements.overlay.parentElement.style.maxWidth = "100%";
+        elements.overlay.parentElement.style.maxHeight = "100%";
+        currentJoiners = joiners;
+      }
+
+      function getOptions() {
+        return {
+          cellSize: clamp(Number(elements.cellSize.value), MIN_CELL_PX, MAX_CELL_PX),
+          color: elements.color.value || DEFAULT_COLOR,
+          radiusFactor: clamp(Number(elements.radiusFactor.value), 0.1, 0.5),
+          concaveDiagonal: Boolean(elements.concaveDiagonal.checked),
+          blobT: Boolean(elements.blobT.checked)
+        };
+      }
+
+      function resizeGrid(newRows, newCols) {
+        const newState = new Array(newRows * newCols).fill(false);
+        const minRows = Math.min(rows, newRows);
+        const minCols = Math.min(cols, newCols);
+        for (let y = 0; y < minRows; y++) {
+          for (let x = 0; x < minCols; x++) {
+            const oldIdx = indexFor(x, y, cols);
+            const newIdx = indexFor(x, y, newCols);
+            newState[newIdx] = state[oldIdx];
+          }
+        }
+        state = newState;
+        rows = newRows;
+        cols = newCols;
+        rebuildOverlay(rows, cols, getOptions().cellSize);
+        redraw();
+        slots = new Array(5).fill(null);
+        saveSlots(slots, rows, cols);
+        updateSlotSelectors(slots, activeSlotIndex, rows, cols);
+        setStatus("Grid resized. Slots reset to match new shape.");
+      }
+
+      function toggleCell(index) {
+        state[index] = !state[index];
+        redraw();
+      }
+
+      function clearGrid() {
+        state.fill(false);
+        redraw();
+      }
+
+      function saveActiveSlot() {
+        const idx = activeSlotIndex;
+        slots[idx] = cloneState(state);
+        saveSlots(slots, rows, cols);
+        updateSlotSelectors(slots, idx, rows, cols);
+        setStatus(`Saved to slot ${idx + 1}.`);
+      }
+
+      function loadActiveSlot() {
+        const slotState = slots[activeSlotIndex];
+        if (slotState) {
+          state = cloneState(slotState);
+          redraw();
+          setStatus(`Loaded slot ${activeSlotIndex + 1}.`);
+        }
+      }
+
+      function setActiveSlot(index) {
+        activeSlotIndex = index;
+        updateSlotSelectors(slots, activeSlotIndex, rows, cols);
+        loadActiveSlot();
+      }
+
+      function getSelectedSlots() {
+        const indexes = getSelectedMorphSlots();
+        if (indexes.length < 2) {
+          alert("Select between 2 and 5 slots for morphing.");
+          return null;
+        }
+        const states = indexes.map(idx => slots[idx]);
+        if (states.some(s => !s)) {
+          alert("All selected slots must contain saved designs.");
+          return null;
+        }
+        return { indexes, states };
+      }
+
+      function morphSequence(states, framesPerStep) {
+        const sequence = [];
+        let prev = cloneState(states[0]);
+        sequence.push(cloneState(prev));
+        for (let s = 1; s < states.length; s++) {
+          const target = states[s];
+          const diff = [];
+          for (let i = 0; i < prev.length; i++) {
+            if (prev[i] !== target[i]) {
+              diff.push(i);
+            }
+          }
+          const total = diff.length;
+          for (let frame = 1; frame <= framesPerStep; frame++) {
+            const next = cloneState(prev);
+            const count = Math.round((frame / framesPerStep) * total);
+            for (let j = 0; j < count; j++) {
+              const idx = diff[j];
+              if (idx !== undefined) {
+                next[idx] = target[idx];
+              }
+            }
+            prev = next;
+            sequence.push(cloneState(prev));
+          }
+        }
+        return sequence;
+      }
+
+      function buildSvg(state, joiners, rows, cols, options) {
+        const width = cols * options.cellSize;
+        const height = rows * options.cellSize;
+        const rgb = hexToRgb(options.color);
+        const fill = `rgb(${rgb.r},${rgb.g},${rgb.b})`;
+        const rects = [];
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            if (state[indexFor(x, y, cols)]) {
+              rects.push(`<rect x="${(x * options.cellSize).toFixed(3)}" y="${(y * options.cellSize).toFixed(3)}" width="${options.cellSize.toFixed(3)}" height="${options.cellSize.toFixed(3)}" />`);
+            }
+          }
+        }
+        const circles = joiners.map(joiner => `<circle cx="${joiner.x.toFixed(3)}" cy="${joiner.y.toFixed(3)}" r="${joiner.radius.toFixed(3)}" />`);
+        const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="${fill}">\n  <g class="cells">\n    ${rects.join("\n    ")}\n  </g>\n  <g class="joiners">\n    ${circles.join("\n    ")}\n  </g>\n</svg>`;
+        return svg;
+      }
+
+      function jsonExport(state, rows, cols, options) {
+        return JSON.stringify({
+          schema: 1,
+          rows,
+          cols,
+          cell: options.cellSize,
+          color: options.color,
+          opts: {
+            radiusFactor: options.radiusFactor,
+            concaveDiagonal: options.concaveDiagonal,
+            blobT: options.blobT
+          },
+          grid: state.slice()
+        }, null, 2);
+      }
+
+      function jsonImport(text) {
+        try {
+          const data = JSON.parse(text);
+          if (!data || data.schema !== 1) {
+            alert("Unsupported schema version.");
+            return;
+          }
+          const newRows = clamp(Number(data.rows), MIN_SIZE, MAX_SIZE) || DEFAULT_ROWS;
+          const newCols = clamp(Number(data.cols), MIN_SIZE, MAX_SIZE) || DEFAULT_COLS;
+          const newCell = clamp(Number(data.cell), MIN_CELL_PX, MAX_CELL_PX) || DEFAULT_CELL;
+          const newColor = typeof data.color === "string" ? data.color : DEFAULT_COLOR;
+          const opts = data.opts || {};
+          elements.radiusFactor.value = clamp(Number(opts.radiusFactor), 0.1, 0.5).toFixed(2);
+          elements.concaveDiagonal.checked = Boolean(opts.concaveDiagonal);
+          elements.blobT.checked = Boolean(opts.blobT);
+
+          if (newRows !== rows || newCols !== cols) {
+            rows = newRows;
+            cols = newCols;
+            elements.rows.value = rows;
+            elements.cols.value = cols;
+            state = defaultState(rows, cols);
+            rebuildOverlay(rows, cols, newCell);
+            slots = new Array(5).fill(null);
+          }
+          elements.cellSize.value = newCell;
+          elements.color.value = newColor;
+
+          const grid = Array.isArray(data.grid) ? data.grid : [];
+          state = toBooleanArray(grid, rows, cols);
+          saveSlots(slots, rows, cols);
+          updateSlotSelectors(slots, activeSlotIndex, rows, cols);
+          redraw();
+          setStatus("JSON imported successfully.");
+        } catch (err) {
+          console.error(err);
+          alert("Invalid JSON supplied.");
+        }
+      }
+
+      function createOffscreenCanvas(width, height) {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        return canvas;
+      }
+
+      function canvasToPngBytes(canvas) {
+        const dataUrl = canvas.toDataURL("image/png");
+        const base64 = dataUrl.split(",")[1];
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+      }
+
+      // CRC32 ----------------------------------------------------------------
+      const CRC_TABLE = (function() {
+        const table = new Uint32Array(256);
+        for (let i = 0; i < 256; i++) {
+          let c = i;
+          for (let j = 0; j < 8; j++) {
+            if (c & 1) {
+              c = 0xedb88320 ^ (c >>> 1);
+            } else {
+              c = c >>> 1;
+            }
+          }
+          table[i] = c >>> 0;
+        }
+        return table;
+      })();
+
+      function crc32(bytes) {
+        let crc = 0xffffffff;
+        for (let i = 0; i < bytes.length; i++) {
+          const byte = bytes[i];
+          const idx = (crc ^ byte) & 0xff;
+          crc = (CRC_TABLE[idx] ^ (crc >>> 8)) >>> 0;
+        }
+        return (crc ^ 0xffffffff) >>> 0;
+      }
+
+      function encodeUint16LE(value) {
+        return [value & 0xff, (value >>> 8) & 0xff];
+      }
+
+      function encodeUint32LE(value) {
+        return [
+          value & 0xff,
+          (value >>> 8) & 0xff,
+          (value >>> 16) & 0xff,
+          (value >>> 24) & 0xff
+        ];
+      }
+
+      function stringToBytes(str) {
+        const bytes = new Uint8Array(str.length);
+        for (let i = 0; i < str.length; i++) {
+          bytes[i] = str.charCodeAt(i);
+        }
+        return Array.from(bytes);
+      }
+
+      class ZipWriter {
+        constructor() {
+          this.chunks = [];
+          this.central = [];
+          this.offset = 0;
+          this.count = 0;
+        }
+
+        addFile(name, bytes) {
+          const nameBytes = stringToBytes(name);
+          const crc = crc32(bytes);
+          const header = [
+            ...encodeUint32LE(0x04034b50),
+            ...encodeUint16LE(20),
+            ...encodeUint16LE(0),
+            ...encodeUint16LE(0),
+            ...encodeUint16LE(0),
+            ...encodeUint16LE(0),
+            ...encodeUint32LE(crc),
+            ...encodeUint32LE(bytes.length),
+            ...encodeUint32LE(bytes.length),
+            ...encodeUint16LE(nameBytes.length),
+            ...encodeUint16LE(0)
+          ];
+          const local = [...header, ...nameBytes, ...Array.from(bytes)];
+          this.chunks.push(local);
+
+          const centralHeader = [
+            ...encodeUint32LE(0x02014b50),
+            ...encodeUint16LE(20),
+            ...encodeUint16LE(20),
+            ...encodeUint16LE(0),
+            ...encodeUint16LE(0),
+            ...encodeUint16LE(0),
+            ...encodeUint16LE(0),
+            ...encodeUint32LE(crc),
+            ...encodeUint32LE(bytes.length),
+            ...encodeUint32LE(bytes.length),
+            ...encodeUint16LE(nameBytes.length),
+            ...encodeUint16LE(0),
+            ...encodeUint16LE(0),
+            ...encodeUint16LE(0),
+            ...encodeUint16LE(0),
+            ...encodeUint32LE(0),
+            ...encodeUint32LE(this.offset)
+          ];
+          this.central.push([...centralHeader, ...nameBytes]);
+
+          this.offset += local.length;
+          this.count += 1;
+        }
+
+        finish() {
+          let sizeLocal = 0;
+          const localParts = this.chunks.map(chunk => {
+            sizeLocal += chunk.length;
+            return chunk;
+          });
+          const centralOffset = sizeLocal;
+          let sizeCentral = 0;
+          const centralParts = this.central.map(part => {
+            sizeCentral += part.length;
+            return part;
+          });
+          const eocd = [
+            ...encodeUint32LE(0x06054b50),
+            ...encodeUint16LE(0),
+            ...encodeUint16LE(0),
+            ...encodeUint16LE(this.count),
+            ...encodeUint16LE(this.count),
+            ...encodeUint32LE(sizeCentral),
+            ...encodeUint32LE(centralOffset),
+            ...encodeUint16LE(0)
+          ];
+          const totalLength = sizeLocal + sizeCentral + eocd.length;
+          const out = new Uint8Array(totalLength);
+          let offset = 0;
+          for (const part of localParts) {
+            out.set(part, offset);
+            offset += part.length;
+          }
+          for (const part of centralParts) {
+            out.set(part, offset);
+            offset += part.length;
+          }
+          out.set(eocd, offset);
+          return out;
+        }
+      }
+
+      function framesToZip(sequence, rows, cols, options) {
+        const width = cols * options.cellSize;
+        const height = rows * options.cellSize;
+        const offscreen = createOffscreenCanvas(width, height);
+        const ctx = offscreen.getContext("2d");
+        const zip = new ZipWriter();
+        for (let i = 0; i < sequence.length; i++) {
+          const frameState = sequence[i];
+          const joiners = drawStateToCanvas(ctx, frameState, rows, cols, options);
+          const bytes = canvasToPngBytes(offscreen);
+          const name = `frame_${pad4(i + 1)}.png`;
+          zip.addFile(name, bytes);
+        }
+        return zip.finish();
+      }
+
+      function buildLottie(state, joiners, rows, cols, options) {
+        const width = cols * options.cellSize;
+        const height = rows * options.cellSize;
+        const rgb = hexToRgb(options.color);
+        const fillColor = [rgb.r / 255, rgb.g / 255, rgb.b / 255, 1];
+
+        function rectPath(w, h) {
+          const hw = w / 2;
+          const hh = h / 2;
+          const i = [
+            [0, 0],
+            [0, 0],
+            [0, 0],
+            [0, 0]
+          ];
+          const o = i;
+          const v = [
+            [-hw, -hh],
+            [hw, -hh],
+            [hw, hh],
+            [-hw, hh]
+          ];
+          return { i, o, v, c: true };
+        }
+
+        function circlePath(r) {
+          const c = 0.5522847498307936;
+          const cr = c * r;
+          const i = [
+            [0, -cr],
+            [-cr, 0],
+            [0, cr],
+            [cr, 0]
+          ];
+          const o = [
+            [0, cr],
+            [cr, 0],
+            [0, -cr],
+            [-cr, 0]
+          ];
+          const v = [
+            [0, -r],
+            [-r, 0],
+            [0, r],
+            [r, 0]
+          ];
+          return { i, o, v, c: true };
+        }
+
+        function shapeGroup(path, name) {
+          return {
+            ty: "gr",
+            nm: name,
+            it: [
+              {
+                ty: "sh",
+                ks: { a: 0, k: path }
+              },
+              {
+                ty: "fl",
+                c: { a: 0, k: fillColor },
+                o: { a: 0, k: 100 },
+                r: 1
+              },
+              {
+                ty: "tr",
+                p: { a: 0, k: [0, 0] },
+                a: { a: 0, k: [0, 0] },
+                s: { a: 0, k: [100, 100] },
+                r: { a: 0, k: 0 },
+                o: { a: 0, k: 100 },
+                sk: { a: 0, k: 0 },
+                sa: { a: 0, k: 0 }
+              }
+            ]
+          };
+        }
+
+        function layer(name, path) {
+          return {
+            ddd: 0,
+            ind: layers.length + 1,
+            ty: 4,
+            nm: name,
+            sr: 1,
+            ks: {
+              o: { a: 0, k: 100 },
+              r: { a: 0, k: 0 },
+              p: { a: 0, k: [path.cx, path.cy, 0] },
+              a: { a: 0, k: [0, 0, 0] },
+              s: { a: 0, k: [100, 100, 100] }
+            },
+            ao: 0,
+            shapes: [shapeGroup(path.path, name)],
+            ip: 0,
+            op: 60,
+            st: 0,
+            bm: 0
+          };
+        }
+
+        const layers = [];
+
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            if (!state[indexFor(x, y, cols)]) continue;
+            const cx = (x + 0.5) * options.cellSize;
+            const cy = (y + 0.5) * options.cellSize;
+            layers.push(layer(`Cell ${y + 1}-${x + 1}`, { cx, cy, path: rectPath(options.cellSize, options.cellSize) }));
+          }
+        }
+
+        joiners.forEach((joiner, idx) => {
+          const path = circlePath(joiner.radius);
+          layers.push(layer(`Joiner ${idx + 1}`, { cx: joiner.x, cy: joiner.y, path }));
+        });
+
+        return {
+          v: "5.7.4",
+          fr: 30,
+          ip: 0,
+          op: 60,
+          w: width,
+          h: height,
+          nm: "Pixel Logo",
+          ddd: 0,
+          assets: [],
+          layers,
+          markers: []
+        };
+      }
+
+      function downloadLottie(state, joiners, rows, cols, options) {
+        const lottie = buildLottie(state, joiners, rows, cols, options);
+        const text = JSON.stringify(lottie, null, 2);
+        dlText("pixel-logo.json", text);
+      }
+
+      function copySvg(svg) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(svg).then(() => {
+            setStatus("SVG copied to clipboard.");
+          }).catch(() => {
+            alert("Clipboard access denied. SVG not copied.");
+          });
+        } else {
+          alert("Clipboard API unavailable in this browser.");
+        }
+      }
+
+      // Event handlers -------------------------------------------------------
+      elements.rows.addEventListener("change", () => {
+        const newRows = clamp(Number(elements.rows.value), MIN_SIZE, MAX_SIZE);
+        elements.rows.value = newRows;
+        resizeGrid(newRows, cols);
+      });
+
+      elements.cols.addEventListener("change", () => {
+        const newCols = clamp(Number(elements.cols.value), MIN_SIZE, MAX_SIZE);
+        elements.cols.value = newCols;
+        resizeGrid(rows, newCols);
+      });
+
+      elements.cellSize.addEventListener("input", () => {
+        rebuildOverlay(rows, cols, getOptions().cellSize);
+        redraw();
+      });
+
+      [elements.color, elements.radiusFactor, elements.concaveDiagonal, elements.blobT].forEach(el => {
+        el.addEventListener("input", redraw);
+        el.addEventListener("change", redraw);
+      });
+
+      elements.clear.addEventListener("click", () => {
+        clearGrid();
+        setStatus("Grid cleared.");
+      });
+
+      elements.activeSlot.addEventListener("change", () => {
+        const idx = Number(elements.activeSlot.value);
+        setActiveSlot(idx);
+      });
+
+      elements.saveSlot.addEventListener("click", saveActiveSlot);
+
+      elements.exportPng.addEventListener("click", () => {
+        const options = getOptions();
+        const ctx = canvasContext;
+        const joiners = drawStateToCanvas(ctx, state, rows, cols, options);
+        const pngBytes = canvasToPngBytes(elements.canvas);
+        dl("pixel-logo.png", new Blob([pngBytes], { type: "image/png" }));
+        currentJoiners = joiners;
+      });
+
+      elements.exportSvg.addEventListener("click", () => {
+        const options = getOptions();
+        const joiners = computeJoiners(state, rows, cols, { ...options });
+        const svg = buildSvg(state, joiners, rows, cols, options);
+        dlText("pixel-logo.svg", svg);
+      });
+
+      elements.copySvg.addEventListener("click", () => {
+        const options = getOptions();
+        const joiners = computeJoiners(state, rows, cols, { ...options });
+        const svg = buildSvg(state, joiners, rows, cols, options);
+        copySvg(svg);
+      });
+
+      elements.exportJson.addEventListener("click", () => {
+        const options = getOptions();
+        const json = jsonExport(state, rows, cols, options);
+        dlText("pixel-logo.json", json);
+      });
+
+      elements.importJson.addEventListener("click", () => {
+        elements.jsonInput.value = "";
+        elements.dialog.returnValue = "cancel";
+        elements.dialog.showModal();
+      });
+
+      elements.dialog.addEventListener("close", () => {
+        if (elements.dialog.returnValue === "import") {
+          const text = elements.jsonInput.value.trim();
+          jsonImport(text);
+        }
+        elements.jsonInput.value = "";
+      });
+
+      elements.exportLottie.addEventListener("click", () => {
+        const options = getOptions();
+        const joiners = computeJoiners(state, rows, cols, { ...options });
+        downloadLottie(state, joiners, rows, cols, options);
+      });
+
+      elements.exportFramesZip.addEventListener("click", () => {
+        const frames = clamp(Number(elements.framesPerStep.value), 1, 60);
+        elements.framesPerStep.value = frames;
+        const selection = getSelectedSlots();
+        if (!selection) return;
+        const sequence = morphSequence(selection.states, frames);
+        const options = getOptions();
+        const zipBytes = framesToZip(sequence, rows, cols, options);
+        dl("frames.zip", new Blob([zipBytes], { type: "application/zip" }));
+      });
+
+      elements.overlay.addEventListener("contextmenu", (ev) => ev.preventDefault());
+
+      // Initialization -------------------------------------------------------
+      let rows = DEFAULT_ROWS;
+      let cols = DEFAULT_COLS;
+      let state = defaultState(rows, cols);
+      let slots = loadSlots(rows, cols);
+      let activeSlotIndex = 0;
+      let currentJoiners = [];
+      const canvasContext = elements.canvas.getContext("2d");
+
+      updateSlotSelectors(slots, activeSlotIndex, rows, cols);
+      rebuildOverlay(rows, cols, DEFAULT_CELL);
+      redraw();
+      setStatus("Ready. Slots are stored locally.");
+
+      // Load default slot if exists
+      loadActiveSlot();
+
+      window.addEventListener("beforeunload", () => {
+        saveSlots(slots, rows, cols);
+      });
+    })();
+  </script>
+</body>
+</html>
