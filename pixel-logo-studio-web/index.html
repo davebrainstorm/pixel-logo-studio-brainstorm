@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pixel Logo Studio</title>
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1>Pixel Logo Studio <span class="tag">Lottie Joiners</span></h1>
+    <p class="help-text">Lottie uses local paths (0,0) + layer transforms; joiners render above cells.</p>
+  </header>
+
+  <main class="app-main">
+    <section class="controls" aria-label="Controls">
+      <div class="control-group" aria-labelledby="grid-title">
+        <h2 id="grid-title">Grid</h2>
+        <div class="field">
+          <label for="rows">Rows</label>
+          <input type="number" id="rows" min="2" max="12" value="5">
+        </div>
+        <div class="field">
+          <label for="cols">Columns</label>
+          <input type="number" id="cols" min="2" max="12" value="5">
+        </div>
+        <div class="field">
+          <label for="cellSize">Cell size (px)</label>
+          <input type="number" id="cellSize" min="20" max="160" value="80">
+        </div>
+      </div>
+
+      <div class="control-group" aria-labelledby="style-title">
+        <h2 id="style-title">Style</h2>
+        <div class="field">
+          <label for="color">Foreground</label>
+          <input type="color" id="color" value="#0f62fe">
+        </div>
+        <div class="field">
+          <label for="radiusFactor">Join radius factor</label>
+          <input type="range" id="radiusFactor" min="0.10" max="0.50" step="0.01" value="0.28">
+          <output id="radiusValue" for="radiusFactor">0.28</output>
+        </div>
+        <div class="field checkbox">
+          <input type="checkbox" id="concaveDiagonal" checked>
+          <label for="concaveDiagonal">Concave diagonal joiners</label>
+        </div>
+        <div class="field checkbox">
+          <input type="checkbox" id="blobT" checked>
+          <label for="blobT">T-junction blob</label>
+        </div>
+      </div>
+
+      <div class="control-group" aria-labelledby="slots-title">
+        <h2 id="slots-title">Slots &amp; Morph</h2>
+        <div class="field">
+          <label for="activeSlot">Active slot</label>
+          <select id="activeSlot" aria-label="Active slot selector"></select>
+        </div>
+        <div class="field">
+          <button id="loadSlot" type="button">Load active slot</button>
+          <button id="saveSlot" type="button">Save → active slot</button>
+        </div>
+        <div class="field morph">
+          <span class="label">Morph sources</span>
+          <div id="morphSources" class="morph-list" aria-label="Morph source slots"></div>
+        </div>
+        <div class="field">
+          <label for="framesPerStep">Frames per step</label>
+          <input type="number" id="framesPerStep" min="1" max="60" value="10">
+        </div>
+      </div>
+
+      <div class="control-group" aria-labelledby="exports-title">
+        <h2 id="exports-title">Exports</h2>
+        <div class="export-buttons">
+          <button id="exportPng" type="button">Download PNG</button>
+          <button id="exportSvg" type="button">Download SVG</button>
+          <button id="copySvg" type="button">Copy SVG XML</button>
+          <button id="exportJson" type="button">Download JSON</button>
+          <button id="importJson" type="button">Import JSON</button>
+          <button id="exportFrames" type="button">Frames → ZIP</button>
+          <button id="exportLottie" type="button">Download Lottie JSON</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="canvas-area">
+      <div class="grid-wrapper">
+        <svg id="gridSvg" aria-label="Pixel grid canvas" tabindex="0"></svg>
+      </div>
+      <div class="inline-status" aria-live="polite" id="status"></div>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, sans-serif;
+  color: #1f1f1f;
+  background: #f5f7fb;
+}
+
+.app-header {
+  padding: 1.5rem clamp(1rem, 3vw, 2rem);
+  background: #0f62fe;
+  color: #fff;
+  border-bottom: 4px solid #083ea5;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.app-header .tag {
+  font-size: 0.75em;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.2em 0.6em;
+  border-radius: 999px;
+}
+
+.help-text {
+  margin: 0.75rem 0 0;
+  font-size: 0.95rem;
+  max-width: 60ch;
+}
+
+.app-main {
+  display: grid;
+  grid-template-columns: minmax(260px, 360px) 1fr;
+  gap: 1.5rem;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+@media (max-width: 960px) {
+  .app-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+.controls {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
+.control-group {
+  background: #fff;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 8px 20px rgba(15, 30, 60, 0.08);
+  display: grid;
+  gap: 0.75rem;
+}
+
+.control-group h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #0b1e5b;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.field.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.field.checkbox input[type="checkbox"] {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.field.morph .label {
+  font-weight: 600;
+}
+
+.morph-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 0.5rem;
+}
+
+label {
+  font-weight: 600;
+}
+
+input,
+select,
+button {
+  font: inherit;
+}
+
+input[type="number"],
+input[type="range"],
+input[type="color"],
+select,
+button {
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(15, 30, 60, 0.2);
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus,
+select:focus,
+button:focus,
+svg rect:focus {
+  outline: 3px solid rgba(15, 98, 254, 0.45);
+  outline-offset: 2px;
+}
+
+button {
+  cursor: pointer;
+  background: #0f62fe;
+  color: #fff;
+  border-color: #0f62fe;
+}
+
+button:hover {
+  background: #0840bd;
+  border-color: #0840bd;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.export-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.5rem;
+}
+
+.canvas-area {
+  display: grid;
+  gap: 1rem;
+}
+
+.grid-wrapper {
+  background: #fff;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 8px 20px rgba(15, 30, 60, 0.08);
+  overflow: auto;
+  max-height: 80vh;
+}
+
+#gridSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid rgba(15, 30, 60, 0.1);
+  background: #fefefe;
+}
+
+.cell-fill {
+  stroke: rgba(15, 30, 60, 0.12);
+  stroke-width: 1;
+}
+
+.cell-fill.active {
+  fill-opacity: 1;
+}
+
+.cell-fill.inactive {
+  fill-opacity: 0;
+}
+
+.cell-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.joiner {
+  pointer-events: none;
+}
+
+.inline-status {
+  min-height: 1.5rem;
+  font-size: 0.95rem;
+  color: #0b1e5b;
+}
+
+.status-ok {
+  color: #0d6e3e;
+}
+
+.status-warn {
+  color: #a66321;
+}
+
+.status-error {
+  color: #b3261e;
+}
